@@ -153,10 +153,13 @@ impl Solver{
     fn solve_board(&mut self) {
         let mut board = self.cells.clone();
         let mut prev_board = self.cells.clone();
+        let mut progress = true;
+        while progress {
+            progress = false;
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
-                    println!("Checking ({}, {})", x, y);
                     if let Cell::Empty(n) = board[y][x] {
+
                         // Check if all mines are found
                         let mut count = 0;
                         for i in -1..2 {
@@ -175,12 +178,24 @@ impl Solver{
                                     if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
                                         if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
                                             self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] = Cell::Clicked;
+                                            progress = true;
                                         }
                                     }
                                 }
                             }
                         }
+                        
+                        if n > 0 {
+                            if n - 1 == count {
 
+                            }
+                        }
+                    }
+                }
+            }
+            for y in 0..HEIGHT {
+                for x in 0..WIDTH {
+                    if let Cell::Empty(n) = board[y][x] {
                         // Check if all cells are mines
                         let mut unkown_count = 0;
                         for i in -1..2 {
@@ -199,21 +214,21 @@ impl Solver{
                                     if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
                                         if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
                                             self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] = Cell::Mine;
+                                            progress = true;
                                         }
                                     }
                                 }
                             }
                         }
-                        
                     }
                 }
             }
-            self.print_board("After first pass");
+        }
 
-            // if prev_board == board {
-            //     println!("No progress made");
-            //     break;
-            // }
+        // if prev_board == board {
+        //     println!("No progress made");
+        //     break;
+        // }
     }
 
     fn is_solved(&self, board: Board) -> bool {
