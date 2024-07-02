@@ -7,6 +7,8 @@ const MINES: usize = 10;
 #[derive(Debug, Clone)]
 enum Cell {
     Mine,
+    Unkown,
+    Clicked,
     Empty(u8),
 }
 
@@ -50,6 +52,8 @@ impl Board {
                 match cell {
                     Cell::Mine => print!("X"),
                     Cell::Empty(n) => print!("{}", n),
+                    Cell::Clicked => print!("C"),
+                    Cell::Unkown => print!("U"),
                 }
             }
             println!();
@@ -81,9 +85,8 @@ impl Board {
 
 impl Solver{
     // Solves a board given to it
-    fn solver(board: Board) -> Self {
+    fn new(board: Vec<Vec<Cell>>) -> Self {
         let empty_cell = Cell::Empty(0);
-        let solved_board = board.clone();
         let cells = vec![vec![empty_cell.clone(); WIDTH]; HEIGHT];
         let mut board = Solver {
             cells
@@ -91,7 +94,8 @@ impl Solver{
         board
     }
 
-    fn solve_board(&self, board: Board) {
+    fn solve_board(&mut self, board: Board) {
+        let mut board = board.clone();
         while !self.is_solved(board.clone()) {
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
@@ -99,6 +103,7 @@ impl Solver{
                         if n == 0 {
                             self.click(x, y);
                         }
+                    }
                 }
             }
         }
@@ -117,15 +122,15 @@ impl Solver{
         true
     }
 
-    fn click(&self, x: usize, y: usize) {
+    fn click(&mut self, x: usize, y: usize) {
         println!("Clicking at ({}, {})", x, y);
-        self.cells[y][x] = self.solve_board[y][x];
+        self.cells[y][x] = Cell::Clicked;
     }
 }
 
 fn main() {
     let _board = Board::new_board();
     _board.print_board();
-    let _solver = Solver::solver(_board);
+    let _solver = Solver::new(_board.cells.clone());
     _solver.is_solved(_board);
 }
