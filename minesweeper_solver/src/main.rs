@@ -4,7 +4,7 @@ const WIDTH: usize = 10;
 const HEIGHT: usize = 10;
 const MINES: usize = 10;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Cell {
     Mine,
     Unkown,
@@ -12,7 +12,7 @@ enum Cell {
     Empty(u8),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Board {
     cells: Vec<Vec<Cell>>,
 }
@@ -60,26 +60,29 @@ impl Board {
         }
     }
 
-    fn calculate_numbers(&mut self) {
+    fn update_board(&self, mut board: Board) -> Board {
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
-                let mut count = 0;
-                for i in -1..2 {
-                    for j in -1..2 {
-                        let new_x = x as i32 + i;
-                        let new_y = y as i32 + j;
-                        if new_x >= 0 && new_x < WIDTH as i32 && new_y >= 0 && new_y < HEIGHT as i32 {
-                            if let Cell::Mine = self.cells[new_y as usize][new_x as usize] {
-                                count += 1;
+                if board.cells[y][x] == Cell::Clicked {
+                    if self.cells[y][x] == Cell::Mine {
+                        board.cells[y][x] = Cell::Mine;
+                    } else {
+                        let mut count = 0;
+                        for i in -1..2 {
+                            for j in -1..2 {
+                                if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
+                                    if self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Mine {
+                                        count += 1;
+                                    }
+                                }
                             }
                         }
+                        board.cells[y][x] = Cell::Empty(count);
                     }
-                }
-                if let Cell::Empty(n) = self.cells[y][x] {
-                    self.cells[y][x] = Cell::Empty(count);
                 }
             }
         }
+        board
     }
 }
 
@@ -96,9 +99,10 @@ impl Solver{
 
     fn solve_board(&mut self, board: Board) {
         let mut board = board.clone();
-        while !self.is_solved(board.clone()) {
+        let mut prev_board = board.clone();
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
+                    println!("Checking ({}, {})", x, y);
                     if let Cell::Empty(n) = board.cells[y][x] {
                         if n == 0 {
                             self.click(x, y);
@@ -106,7 +110,22 @@ impl Solver{
                     }
                 }
             }
-        }
+            for row in &self.cells {
+                for cell in row {
+                    match cell {
+                        Cell::Mine => print!("X"),
+                        Cell::Empty(n) => print!("{}", n),
+                        Cell::Clicked => print!("C"),
+                        Cell::Unkown => print!("U"),
+                    }
+                }
+                println!();
+            }
+
+            // if prev_board == board {
+            //     println!("No progress made");
+            //     break;
+            // }
     }
 
     fn is_solved(&self, board: Board) -> bool {
@@ -114,7 +133,7 @@ impl Solver{
             for x in 0..WIDTH {
                 if let Cell::Empty(n) = board.cells[y][x] {
                     if n == 0 {
-                        println!("{}", n);
+                        return false;
                     }
                 }
             }
@@ -131,6 +150,12 @@ impl Solver{
 fn main() {
     let _board = Board::new_board();
     _board.print_board();
-    let _solver = Solver::new(_board.cells.clone());
-    _solver.is_solved(_board);
+    let mut _solver = Solver::new(_board.cells.clone());
+    // _solver.solve_board(_board);
+    
+    // while !_solver.is_solved(_board.clone()) {
+        _solver.solve_board(_board.clone());
+        
+    // }
+
 }
