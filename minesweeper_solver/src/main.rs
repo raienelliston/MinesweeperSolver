@@ -4,26 +4,32 @@ const WIDTH: usize = 10;
 const HEIGHT: usize = 10;
 const MINES: usize = 10;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Cell {
     Mine,
     Empty(u8),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Board {
-    cells: [[Cell; WIDTH]; HEIGHT],
+    cells: Vec<Vec<Cell>>,
+}
+
+#[derive(Debug, Clone)]
+struct Solver {
+    cells: Vec<Vec<Cell>>,
 }
 
 impl Board {
-    fn new() -> Self {
+    // Create a new board with empty cells and place mines
+    fn new_board() -> Self {
         let empty_cell = Cell::Empty(0);
         let cells = vec![vec![empty_cell.clone(); WIDTH]; HEIGHT];
         let mut board = Board {
             cells
         };
         board.place_mines();
-        println!("{:?}", board);
+        
         // board.calculate_numbers();
         board
     }
@@ -37,8 +43,33 @@ impl Board {
         }
     }
 
+    // Prints the
+    fn print_board(&self) {
+        for row in &self.cells {
+            for cell in row {
+                match cell {
+                    Cell::Mine => print!("X"),
+                    Cell::Empty(n) => print!("{}", n),
+                }
+            }
+            println!();
+        }
+    }
+
+}
+
+impl Solver{
+    // Solves a board given to it
+    fn solver(board: Board) -> Self {
+        let new_board = board.clone();
+        // new_board.calculate_numbers();
+        Solver {
+            cells: new_board.cells
+        }
+    }
 }
 
 fn main() {
-    let _board = Board::new();
+    let _board = Board::new_board();
+    _board.print_board();
 }
