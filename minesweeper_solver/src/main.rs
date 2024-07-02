@@ -60,12 +60,12 @@ impl Board {
         }
     }
 
-    fn update_board(&self, mut board: Board) -> Board {
+    fn update_board(&self, mut board: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
-                if board.cells[y][x] == Cell::Clicked {
+                if board[y][x] == Cell::Clicked {
                     if self.cells[y][x] == Cell::Mine {
-                        board.cells[y][x] = Cell::Mine;
+                        board[y][x] = Cell::Mine;
                     } else {
                         let mut count = 0;
                         for i in -1..2 {
@@ -77,7 +77,7 @@ impl Board {
                                 }
                             }
                         }
-                        board.cells[y][x] = Cell::Empty(count);
+                        board[y][x] = Cell::Empty(count);
                     }
                 }
             }
@@ -89,7 +89,7 @@ impl Board {
 impl Solver{
     // Solves a board given to it
     fn new(board: Vec<Vec<Cell>>) -> Self {
-        let empty_cell = Cell::Empty(0);
+        let empty_cell = Cell::Unkown;
         let cells = vec![vec![empty_cell.clone(); WIDTH]; HEIGHT];
         let mut board = Solver {
             cells
@@ -97,30 +97,46 @@ impl Solver{
         board
     }
 
-    fn solve_board(&mut self, board: Board) {
-        let mut board = board.clone();
-        let mut prev_board = board.clone();
+    fn print_board(&self) {
+        for row in &self.cells {
+            for cell in row {
+                match cell {
+                    Cell::Mine => print!("X"),
+                    Cell::Empty(n) => print!("{}", n),
+                    Cell::Clicked => print!("C"),
+                    Cell::Unkown => print!("U"),
+                }
+            }
+            println!();
+        }
+    }
+
+    fn solve_board(&mut self) {
+        let mut board = self.cells.clone();
+        let mut prev_board = self.cells.clone();
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
                     println!("Checking ({}, {})", x, y);
-                    if let Cell::Empty(n) = board.cells[y][x] {
-                        if n == 0 {
-                            self.click(x, y);
+                    if board[y][x] == Cell::Unkown {
+                        let mut count = 0;
+                        for i in -1..2 {
+                            for j in -1..2 {
+                                if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
+                                    if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Mine {
+                                        count += 1;
+                                    }
+                                }
+                            }
+                        }
+                        if count == 0 {
+                            self.cells[y][x] = Cell::Clicked;
+                        } else {
+                            self.cells[y][x] = Cell::Empty(count);
                         }
                     }
                 }
             }
-            for row in &self.cells {
-                for cell in row {
-                    match cell {
-                        Cell::Mine => print!("X"),
-                        Cell::Empty(n) => print!("{}", n),
-                        Cell::Clicked => print!("C"),
-                        Cell::Unkown => print!("U"),
-                    }
-                }
-                println!();
-            }
+            self.print_board();
 
             // if prev_board == board {
             //     println!("No progress made");
@@ -141,8 +157,7 @@ impl Solver{
         true
     }
 
-    fn click(&mut self, x: usize, y: usize) {
-        println!("Clicking at ({}, {})", x, y);
+    fn click_cell(&mut self, x: usize, y: usize) {
         self.cells[y][x] = Cell::Clicked;
     }
 }
@@ -153,9 +168,12 @@ fn main() {
     let mut _solver = Solver::new(_board.cells.clone());
     // _solver.solve_board(_board);
     
+    _solver.click_cell(4, 4);
+
     // while !_solver.is_solved(_board.clone()) {
-        _solver.solve_board(_board.clone());
-        
+        _solver.solve_board();
+        _solver.cells = _board.update_board(_solver.cells.clone());
+        _solver.print_board();
     // }
 
 }
