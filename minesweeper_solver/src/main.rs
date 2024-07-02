@@ -127,6 +127,9 @@ impl Board {
 impl Solver{
     // Solves a board given to it
     fn new(pre_board: Vec<Vec<Cell>>) -> Self {
+        Solver {
+            cells: pre_board.clone(),
+        };
         let empty_cell = Cell::Unkown;
         let cells = pre_board.clone();
         let mut board = Solver {
@@ -153,7 +156,7 @@ impl Solver{
     fn solve_board(&mut self, mines: i32) {
         let mut prev_board = self.cells.clone();
         let mut progress = true;
-        let mut minus_ones: Vec<Vec<Vec<[i32; 2]>>> = vec![];
+        let mut minus_ones: Vec<Vec<[i32; 2]>> = vec![];
         let mut cells: Vec<[i32; 2]> = vec![];
     
         while progress {
@@ -194,13 +197,13 @@ impl Solver{
     
                         // Handle the case where n > 0 and n - 1 mines are found
                         if n > 0 && n - 1 == count {
-                            let mut minus_one: Vec<Vec<[i32; 2]>> = vec![];
+                            let mut minus_one: Vec<[i32; 2]> = vec![];
                             for i in -1..=1 {
                                 for j in -1..=1 {
                                     let (nx, ny) = (x as i32 + i, y as i32 + j);
                                     if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
-                                        if board[ny as usize][nx as usize] == Cell::Unknown {
-                                            minus_one.push(vec![ny, nx]);
+                                        if board[ny as usize][nx as usize] == Cell::Unkown {
+                                            minus_one.push([ny, nx]);
                                         }
                                     }
                                 }
@@ -215,6 +218,8 @@ impl Solver{
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
                     if let Cell::Empty(n) = board[y][x] {
+                        // Track unknown cells for later
+                        let mut cells: Vec<[i32; 2]> = Vec::new();
                         // Check if all cells are mines
                         let mut unkown_count = 0;
                         for i in -1..=1 {
@@ -223,31 +228,29 @@ impl Solver{
                                 if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
                                     if board[ny as usize][nx as usize] == Cell::Unkown {
                                         unkown_count += 1;
-                                         // Track unknown cells for later
                                         cells.push([ny, nx]);
                                     }
                                 }
                             }
                         }
-    
+            
                         // If all cells are mines, click all unknown cells
                         if unkown_count == n {
-                            for (ny, nx) in cells.iter().copied() {
+                            for &[ny, nx] in &cells {
                                 self.cells[ny as usize][nx as usize] = Cell::Mine;
                                 progress = true;
                             }
                         }
-    
+            
                         // Check for sets of n - 1 mines among the unknowns
-                        for i in minus_ones.iter() {
+                        for set in minus_ones.iter() {
                             let mut count = 0;
-                            let set = i.copy();
-                            for &(ny, nx) in set.iter() {
+                            for &[ny, nx] in set {
                                 if board[ny as usize][nx as usize] == Cell::Unkown {
                                     count += 1;
                                 }
                                 if count == n - 1 {
-                                    for &(ny, nx) in set.iter() {
+                                    for &[ny, nx] in set {
                                         if board[ny as usize][nx as usize] == Cell::Unkown {
                                             self.cells[ny as usize][nx as usize] = Cell::Mine;
                                             progress = true;
@@ -289,9 +292,11 @@ fn main() {
     // _solver.solve_board(_board);
 
     // while !_solver.is_solved(_board.clone()) {
-    for _ in 0..10 {
+    let mut pre_board = _solver.cells.clone();
+    while pre_board.iter().any(|row| row.contains(&Cell::Clicked)){
         _solver.solve_board(10);
-        _solver.cells = _board.update_board(_solver.cells.clone());
+        pre_board = _board.update_board(_solver.cells.clone());
+        _solver.cells = pre_board.clone(); 
         _solver.print_board("After update");
     }
     _solver.print_board("Final");
