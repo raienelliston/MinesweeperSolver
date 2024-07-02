@@ -16,8 +16,19 @@ struct Board {
 }
 
 #[derive(Debug, Clone)]
-struct Solver {
+enum SolveCell {
+    Mine,
+    Empty(u8),
+}
+
+#[derive(Debug, Clone)]
+struct SolveBoard {
     cells: Vec<Vec<Cell>>,
+}
+
+#[derive(Debug, Clone)]
+struct Solver {
+    cells: Vec<Vec<SolveCell>>,
 }
 
 impl Board {
@@ -56,17 +67,64 @@ impl Board {
         }
     }
 
+    fn calculate_numbers(&mut self) {
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
+                let mut count = 0;
+                for i in -1..2 {
+                    for j in -1..2 {
+                        let new_x = x as i32 + i;
+                        let new_y = y as i32 + j;
+                        if new_x >= 0 && new_x < WIDTH as i32 && new_y >= 0 && new_y < HEIGHT as i32 {
+                            if let Cell::Mine = self.cells[new_y as usize][new_x as usize] {
+                                count += 1;
+                            }
+                        }
+                    }
+                }
+                if let Cell::Empty(n) = self.cells[y][x] {
+                    self.cells[y][x] = Cell::Empty(count);
+                }
+            }
+        }
+    }
 }
 
 impl Solver{
     // Solves a board given to it
     fn solver(board: Board) -> Self {
-        let new_board = board.clone();
-        // new_board.calculate_numbers();
-        Solver {
-            cells: new_board.cells
+        let empty_cell = Cell::Empty(0);
+        let cells = vec![vec![empty_cell.clone(); WIDTH]; HEIGHT];
+        let mut board = Solver {
+            cells
+        };
+
+        board
+
+    }
+
+    fn solve_board(&self, board: Board) {
+        while !self.is_solved(board.clone()) {
+            for y in 0..HEIGHT {
+                for x in 0..WIDTH {
+                }
+            }
         }
     }
+
+    fn is_solved(&self, board: Board) -> bool {
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
+                if let Cell::Empty(n) = board.cells[y][x] {
+                    if n == 0 {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+
 }
 
 fn main() {
