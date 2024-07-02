@@ -16,19 +16,8 @@ struct Board {
 }
 
 #[derive(Debug, Clone)]
-enum SolveCell {
-    Mine,
-    Empty(u8),
-}
-
-#[derive(Debug, Clone)]
-struct SolveBoard {
-    cells: Vec<Vec<Cell>>,
-}
-
-#[derive(Debug, Clone)]
 struct Solver {
-    cells: Vec<Vec<SolveCell>>,
+    cells: Vec<Vec<Cell>>,
 }
 
 impl Board {
@@ -94,19 +83,22 @@ impl Solver{
     // Solves a board given to it
     fn solver(board: Board) -> Self {
         let empty_cell = Cell::Empty(0);
+        let solved_board = board.clone();
         let cells = vec![vec![empty_cell.clone(); WIDTH]; HEIGHT];
         let mut board = Solver {
             cells
         };
-
         board
-
     }
 
     fn solve_board(&self, board: Board) {
         while !self.is_solved(board.clone()) {
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
+                    if let Cell::Empty(n) = board.cells[y][x] {
+                        if n == 0 {
+                            self.click(x, y);
+                        }
                 }
             }
         }
@@ -117,7 +109,7 @@ impl Solver{
             for x in 0..WIDTH {
                 if let Cell::Empty(n) = board.cells[y][x] {
                     if n == 0 {
-                        return false;
+                        println!("{}", n);
                     }
                 }
             }
@@ -125,9 +117,15 @@ impl Solver{
         true
     }
 
+    fn click(&self, x: usize, y: usize) {
+        println!("Clicking at ({}, {})", x, y);
+        self.cells[y][x] = self.solve_board[y][x];
+    }
 }
 
 fn main() {
     let _board = Board::new_board();
     _board.print_board();
+    let _solver = Solver::solver(_board);
+    _solver.is_solved(_board);
 }
