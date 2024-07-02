@@ -153,92 +153,107 @@ impl Solver{
     fn solve_board(&mut self, mines: i32) {
         let mut prev_board = self.cells.clone();
         let mut progress = true;
-        let mut minus_ones: Vec<Vec<Vec<[i32; 2]>>> =vec![];
-        while progress == true {
+        let mut minus_ones: Vec<Vec<Vec<[i32; 2]>>> = vec![];
+        let mut cells: Vec<[i32; 2]> = vec![];
+    
+        while progress {
             progress = false;
+            cells.clear();
             let mut board = self.cells.clone();
+    
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
                     if let Cell::Empty(n) = board[y][x] {
-
                         // Check if all mines are found
                         let mut count = 0;
-                        for i in -1..2 {
-                            for j in -1..2 {
-                                if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
-                                    if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Mine {
+                        for i in -1..=1 {
+                            for j in -1..=1 {
+                                let (nx, ny) = (x as i32 + i, y as i32 + j);
+                                if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
+                                    if board[ny as usize][nx as usize] == Cell::Mine {
                                         count += 1;
                                     }
                                 }
                             }
                         }
-                        // If all mines are found, click all unkown cells
+                        
+                        // If all mines are found, click all unknown cells
                         if count == n {
-                            for i in -1..2 {
-                                for j in -1..2 {
-                                    if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
-                                        if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
-                                            self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] = Cell::Clicked;
+                            for i in -1..=1 {
+                                for j in -1..=1 {
+                                    let (nx, ny) = (x as i32 + i, y as i32 + j);
+                                    if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
+                                        if board[ny as usize][nx as usize] == Cell::Unkown {
+                                            self.cells[ny as usize][nx as usize] = Cell::Clicked;
                                             progress = true;
                                         }
                                     }
                                 }
                             }
                         }
-                        
-                        if n > 0 {
-                            if n - 1 == count {
-                                let mut minus_one: Vec<Vec<[i32; 2]>> = vec![];
-                                for i in -1..2 {
-                                    for j in -1..2 {
-                                        if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
-                                            if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
-                                                let mut cell = vec![];
-                                                cell.push([y as i32 + j, x as i32 + i]);
-                                                minus_one.push(cell);
-                                            }
+    
+                        // Handle the case where n > 0 and n - 1 mines are found
+                        if n > 0 && n - 1 == count {
+                            let mut minus_one: Vec<Vec<[i32; 2]>> = vec![];
+                            for i in -1..=1 {
+                                for j in -1..=1 {
+                                    let (nx, ny) = (x as i32 + i, y as i32 + j);
+                                    if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
+                                        if board[ny as usize][nx as usize] == Cell::Unknown {
+                                            minus_one.push(vec![ny, nx]);
                                         }
                                     }
                                 }
-                                minus_ones.push(minus_one);
                             }
+                            minus_ones.push(minus_one);
                         }
+                                      
                     }
                 }
             }
+    
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
                     if let Cell::Empty(n) = board[y][x] {
                         // Check if all cells are mines
                         let mut unkown_count = 0;
-                        for i in -1..2 {
-                            for j in -1..2 {
-                                if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
-                                    if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
+                        for i in -1..=1 {
+                            for j in -1..=1 {
+                                let (nx, ny) = (x as i32 + i, y as i32 + j);
+                                if nx >= 0 && nx < WIDTH as i32 && ny >= 0 && ny < HEIGHT as i32 {
+                                    if board[ny as usize][nx as usize] == Cell::Unkown {
                                         unkown_count += 1;
+                                         // Track unknown cells for later
+                                        cells.push([ny, nx]);
                                     }
                                 }
                             }
                         }
-                        // If all cells are mines, click all unkown cells
+    
+                        // If all cells are mines, click all unknown cells
                         if unkown_count == n {
-                            for i in -1..2 {
-                                for j in -1..2 {
-                                    if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
-                                        if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
-                                            self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] = Cell::Mine;
+                            for (ny, nx) in cells.iter().copied() {
+                                self.cells[ny as usize][nx as usize] = Cell::Mine;
+                                progress = true;
+                            }
+                        }
+    
+                        // Check for sets of n - 1 mines among the unknowns
+                        for i in minus_ones.iter() {
+                            let mut count = 0;
+                            let set = i.copy();
+                            for &(ny, nx) in set.iter() {
+                                if board[ny as usize][nx as usize] == Cell::Unkown {
+                                    count += 1;
+                                }
+                                if count == n - 1 {
+                                    for &(ny, nx) in set.iter() {
+                                        if board[ny as usize][nx as usize] == Cell::Unkown {
+                                            self.cells[ny as usize][nx as usize] = Cell::Mine;
                                             progress = true;
                                         }
                                     }
-                                }
-                            }
-                        } else {
-                            for set in minus_ones {
-                                let mut count = 0;
-                                for cell in set {
-                                    if board[cell[0] as usize][cell[1] as usize] == Cell::Unkown {
-                                        
-                                    }
+                                    break;
                                 }
                             }
                         }
@@ -246,12 +261,8 @@ impl Solver{
                 }
             }
         }
-
-        // if prev_board == board {
-        //     println!("No progress made");
-        //     break;
-        // }
     }
+    
 
     fn is_solved(&self, board: Board) -> bool {
         for y in 0..HEIGHT {
