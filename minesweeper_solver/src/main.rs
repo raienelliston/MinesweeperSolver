@@ -150,12 +150,13 @@ impl Solver{
         }
     }
 
-    fn solve_board(&mut self) {
-        let mut board = self.cells.clone();
+    fn solve_board(&mut self, mines: i32) {
         let mut prev_board = self.cells.clone();
         let mut progress = true;
-        while progress {
+        let mut minus_ones: Vec<Vec<Vec<[i32; 2]>>> =vec![];
+        while progress == true {
             progress = false;
+            let mut board = self.cells.clone();
             for y in 0..HEIGHT {
                 for x in 0..WIDTH {
                     if let Cell::Empty(n) = board[y][x] {
@@ -187,7 +188,19 @@ impl Solver{
                         
                         if n > 0 {
                             if n - 1 == count {
-
+                                let mut minus_one: Vec<Vec<[i32; 2]>> = vec![];
+                                for i in -1..2 {
+                                    for j in -1..2 {
+                                        if x as i32 + i >= 0 && x as i32 + i < WIDTH as i32 && y as i32 + j >= 0 && y as i32 + j < HEIGHT as i32 {
+                                            if board[(y as i32 + j) as usize][(x as i32 + i) as usize] == Cell::Unkown {
+                                                let mut cell = vec![];
+                                                cell.push([y as i32 + j, x as i32 + i]);
+                                                minus_one.push(cell);
+                                            }
+                                        }
+                                    }
+                                }
+                                minus_ones.push(minus_one);
                             }
                         }
                     }
@@ -216,6 +229,15 @@ impl Solver{
                                             self.cells[(y as i32 + j) as usize][(x as i32 + i) as usize] = Cell::Mine;
                                             progress = true;
                                         }
+                                    }
+                                }
+                            }
+                        } else {
+                            for set in minus_ones {
+                                let mut count = 0;
+                                for cell in set {
+                                    if board[cell[0] as usize][cell[1] as usize] == Cell::Unkown {
+                                        
                                     }
                                 }
                             }
@@ -257,7 +279,7 @@ fn main() {
 
     // while !_solver.is_solved(_board.clone()) {
     for _ in 0..10 {
-        _solver.solve_board();
+        _solver.solve_board(10);
         _solver.cells = _board.update_board(_solver.cells.clone());
         _solver.print_board("After update");
     }
